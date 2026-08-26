@@ -1,265 +1,127 @@
-<div align="center">
+# 🍕 Picantino
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](https://react.dev/)
+[![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)](https://vite.dev/)
+[![.NET](https://img.shields.io/badge/.NET-9-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
+[![SQL Server](https://img.shields.io/badge/SQL%20Server-Database-CC2927?logo=microsoftsqlserver&logoColor=white)](https://www.microsoft.com/sql-server)
+[![License](https://img.shields.io/badge/License-Portfolio%20Project-lightgrey)](#license)
 
-```text
-██████╗ ██╗ ██████╗█████╗ ███╗   ██╗████████╗██╗███╗   ██╗██████╗ 
-██╔══██╗██║██╔════╝██╔══██╗████╗  ██║╚══██╔══╝██║████╗  ██║██╔══██╗
-██████╔╝██║██║     ███████║██╔██╗ ██║   ██║   ██║██╔██╗ ██║██║  ██║
-██╔═══╝ ██║██║     ██╔══██║██║╚██╗██║   ██║   ██║██║╚██╗██║██║  ██║
-██║     ██║╚██████╗██║  ██║██║ ╚████║   ██║   ██║██║ ╚████║██████╔╝
-╚═╝     ╚═╝ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═══╝   ╚═╝   ╚═╝╚═╝  ╚═══╝╚═════╝ 
-                       ITALIAN RESTAURANT
+A full-stack restaurant website built for **Picantino**, a Italian pizzeria concept based in Plovdiv, Bulgaria. This is a personal portfolio project showcasing a complete, production-style web application - from a custom-designed marketing site to a self-built authentication system backed by a real API.
 
-### Modern Full-Stack Restaurant Web Application
-
-A portfolio project representing an Italian restaurant experience in Plovdiv, Bulgaria.
+> Personal project, built independently for portfolio purposes — not a paid client engagement.
 
 ---
 
 ## Overview
 
-**Picantino** is a full-stack restaurant website combining a responsive React frontend with a custom ASP.NET Core Web API.
+Picantino is a two-part application:
 
-The application provides a complete restaurant experience, including menu browsing, restaurant information, authentication, email verification, and database-backed user management.
+- A **marketing/ordering-style frontend** — home page, full menu, brand story, and a location/reservation page — with a distinctive, hand-crafted visual identity (custom color system, typography, and micro-interactions).
+- A **custom REST API backend** handling user accounts: registration with email OTP verification, JWT-based login, and a full forgot/reset password flow — all built from scratch rather than relying on a third-party auth provider.
 
-> **Portfolio Project** — This is a self-directed, unpaid project created for learning and portfolio purposes.
-
----
-
-## Features
-
-*  Restaurant landing page
-*  Restaurant story and history
-*  Categorized food and wine menu
-*  Image gallery
-*  Customer reviews
-*  Location and opening hours
-*  Reservation request interface
-*  User registration and login
-*  Email OTP verification
-*  Password reset
-*  JWT authentication
-*  Swagger / OpenAPI documentation
-*  Responsive design
+The goal of this project was to practice building a complete product end to end: a polished, animated UI on top of a real, self-hosted authentication system with its own database, email delivery, and token handling.
 
 ---
 
 ## Tech Stack
 
-### Frontend
+**Frontend**
+- React 19 + Vite
+- React Router 7
+- Tailwind CSS + custom CSS-variable-based design system (color palette, typography scale, spacing/radius tokens)
+- shadcn/ui component primitives (Radix UI under the hood)
+- TanStack React Query
+- React Hook Form
+- Lucide icons
 
-| Technology | Purpose |
-| --- | --- |
-| React 19 | User interface |
-| Vite 8 | Development and build tooling |
-| React Router 7 | Client-side routing |
-| Tailwind CSS | Styling |
-| shadcn/ui | UI components |
-| TanStack React Query | Data fetching and caching |
-| React Hook Form | Form handling |
-| Zod | Validation |
-| Lucide | Icons |
-
-### Backend
-
-| Technology | Purpose |
-| --- | --- |
-| .NET 9 | Runtime |
-| ASP.NET Core | REST API |
-| Entity Framework Core | ORM |
-| SQL Server | Database |
-| JWT Bearer | Authentication |
-| BCrypt | Password hashing |
-| MailKit | Email delivery |
-| Swagger / OpenAPI | API documentation |
+**Backend**
+- ASP.NET Core Web API
+- Entity Framework Core + SQL Server
+- JWT bearer authentication
+- BCrypt password hashing
+- MailKit/MimeKit for transactional email (OTP verification codes, password reset links)
 
 ---
 
-## Architecture
+## Features
 
-```text
-┌──────────────────────┐
-│   React + Vite       │
-│   Frontend           │
-└──────────┬───────────┘
-           │
-           │ HTTP / JSON
-           ▼
-┌──────────────────────┐
-│   ASP.NET Core       │
-│   Web API            │
-└──────────┬───────────┘
-           │
-           │ Entity Framework Core
-           ▼
-┌──────────────────────┐
-│      SQL Server      │
-│      Database        │
-└──────────────────────┘
-
-```
-
-Authentication uses JWT tokens for protected API requests.
+-  Custom design system - HSL-based CSS variables driving a cohesive brand palette, custom display/script typefaces, and consistent spacing/radius across every component
+-  Full authentication flow - registration with email OTP verification, JWT login, "forgot password" email + secure reset token flow
+-  Responsive, animated UI - scroll-aware entrance animations, hover micro-interactions, and a mobile-friendly nav
+-  Dynamic menu system - categorized menu data driving tabbed navigation and featured-dish highlights on the homepage
+-  Reservation request form on the Visit page
+-  Component-driven architecture - a reusable UI primitive layer (buttons, dialogs, forms, cards, etc.) shared across every page
 
 ---
 
 ## Project Structure
 
-```text
-picantino/
-│
-├── frontend/
-│   ├── public/
-│   └── src/
-│       ├── assets/
-│       ├── components/
-│       │   ├── sections/
-│       │   └── ui/
-│       ├── contexts/
-│       ├── data/
-│       ├── lib/
-│       ├── pages/
-│       ├── App.jsx
-│       ├── App.css
-│       ├── index.css
-│       └── main.jsx
-│
-├── backend/
-│   ├── Controllers/
-│   ├── Data/
-│   ├── Dtos/
-│   ├── Models/
-│   ├── Services/
-│   ├── Migrations/
-│   ├── Program.cs
-│   ├── appsettings.json
-│   ├── appsettings.Development.json
-│   └── backend.csproj
-│
-└── README.md
+```
+frontend/
+├── public/
+│   └── favicon.svg
+├── src/
+│   ├── assets/images/       
+│   ├── components/
+│   │   ├── ui/                
+│   │   ├── sections/         
+│   │   ├── Layout.jsx, SiteHeader.jsx, SiteFooter.jsx
+│   │   └── ProtectedRoute.jsx
+│   ├── contexts/
+│   │   └── AuthContext.jsx    
+│   ├── pages/                 
+│   ├── lib/                   
+│   ├── data/menu.js
+│   ├── App.jsx, main.jsx
+│   └── index.css              
+├── tailwind.config.js
+├── postcss.config.js
+└── vite.config.js
 
+backend/
+├── Controllers/
+│   └── AuthController.cs      
+├── Models/                    
+├── Dtos/
+├── Services/                 
+├── Data/
+│   └── PizzeriaDbContext.cs
+└── Program.cs
 ```
 
 ---
 
 ## Getting Started
 
-### Prerequisites
-
-Make sure you have installed:
-
-* **Node.js**
-* **.NET 9 SDK**
-* **SQL Server**
-* **Git**
-
-### 1. Clone the repository
+### Frontend
 
 ```bash
-git clone <repository-url>
-cd picantino
-
+cd frontend
+npm install
+npm run dev       # http://localhost:5173
 ```
 
-### 2. Configure the backend
+Create a `.env` file:
 
-Update `backend/appsettings.Development.json` with your local SQL Server connection string, JWT configuration, and SMTP settings.
+```
+VITE_API_URL=http://localhost:5000/api
+```
 
-### 3. Set up the database
+### Backend
 
 ```bash
 cd backend
 dotnet restore
 dotnet ef database update
-
-```
-
-### 4. Start the backend
-
-```bash
 dotnet run
-
 ```
 
-The API URL and port will be displayed in the terminal. Swagger is available at: `http://localhost:<port>/swagger`
-
-### 5. Start the frontend
-
-Open a second terminal:
-
-```bash
-cd frontend
-npm install
-npm run dev
-
-```
-
-The frontend will normally be available at: `http://localhost:5173`
+Configure your connection string, JWT settings, and SMTP credentials in `appsettings.Development.json`.
 
 ---
 
-## Authentication
+## Roadmap
 
-The authentication system is implemented using JWT Bearer authentication.
-
-* **Registration** — `POST /api/auth/register` (Creates a new account and initiates email verification)
-* **Verify Email** — `POST /api/auth/verify-otp` (Verifies the account using the emailed OTP)
-* **Login** — `POST /api/auth/login` (Authenticates the user and returns a JWT)
-* **Current User** — `GET /api/auth/me` (Returns information about the authenticated user)
-* **Password Reset** — `POST /api/auth/forgot-password` & `POST /api/auth/reset-password` (Handles recovery flow)
+- [ ] Online ordering & cart
+- [ ] Admin dashboard for menu/order management
 
 ---
-
-
----
-
-## Development
-
-Run the two applications separately during development.
-
-**Backend:**
-
-```bash
-cd backend
-dotnet run
-
-```
-
-**Frontend:**
-
-```bash
-cd frontend
-npm run dev
-
-```
-
-During development, Swagger can be used to inspect and test the API endpoints.
-
----
-
-## Project Status
-
-The core application is implemented, including:
-
-* Restaurant website & responsive frontend
-* Menu system
-* Authentication, Email verification & Password recovery
-* JWT authorization
-* SQL Server integration & Entity Framework migrations
-* Swagger documentation
-
-**Future Roadmap:**
-
-* Online ordering & Shopping cart
-* Reservation management system
-* Extended user profiles
-* Administrative dashboard
-
----
-
-## License
-
-This project is an unpaid portfolio and educational project. It is not an official website or commissioned software for the restaurant.
-
-```
-
-```
