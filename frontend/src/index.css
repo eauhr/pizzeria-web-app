@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 42 38% 88%;
+    --foreground: 20 35% 12%;
+    --card: 42 40% 90%;
+    --card-foreground: 20 35% 12%;
+    --popover: 42 40% 90%;
+    --popover-foreground: 20 35% 12%;
+    --primary: 172 36% 18%;
+    --primary-foreground: 42 40% 90%;
+    --secondary: 14 60% 46%;
+    --secondary-foreground: 42 40% 90%;
+    --muted: 42 25% 82%;
+    --muted-foreground: 20 20% 35%;
+    --accent: 14 60% 46%;
+    --accent-foreground: 42 40% 90%;
+    --destructive: 0 70% 45%;
+    --destructive-foreground: 42 40% 90%;
+    --border: 42 25% 80%;
+    --input: 42 25% 80%;
+    --ring: 14 60% 46%;
+    --radius: 0.25rem;
+    --font-heading: 'Anton', Impact, sans-serif;
+    --font-body: 'Inter', system-ui, sans-serif;
+    --font-display: 'Anton', Impact, sans-serif;
+    --font-script: 'Caveat', cursive;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    --sidebar-background: 172 36% 18%;
+    --sidebar-foreground: 42 40% 90%;
+    --sidebar-primary: 14 60% 46%;
+    --sidebar-primary-foreground: 42 40% 90%;
+    --sidebar-accent: 172 30% 24%;
+    --sidebar-accent-foreground: 42 40% 90%;
+    --sidebar-border: 172 30% 24%;
+    --sidebar-ring: 14 60% 46%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body;
+  }
+}
+
+@layer utilities {
+  .font-display { font-family: var(--font-display); }
+  .font-script { font-family: var(--font-script); }
+
+  .display {
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.01em;
+    line-height: 0.92;
+  }
+
+  .marquee-track {
+    display: inline-flex;
+    white-space: nowrap;
+    animation: marquee-scroll 28s linear infinite;
+  }
+  .marquee-track.reverse {
+    animation-direction: reverse;
+  }
+  @keyframes marquee-scroll {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  .paper-tape {
+    background: linear-gradient(180deg, #F5D95E 0%, #EFCC3A 100%);
+    box-shadow: 0 6px 16px -8px rgba(0,0,0,0.4);
+  }
+}
