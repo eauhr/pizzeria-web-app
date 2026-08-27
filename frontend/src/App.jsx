@@ -11,7 +11,7 @@ import Visit from "./pages/Visit";
 
 function App() {
   return (
-    <Router>
+    <Router basename="/pizzeria-web-app">
       <ScrollToTop />
 
       <Routes>
