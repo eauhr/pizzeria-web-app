@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://eauhr.github.io/pizzeria-web-app/sitemap.xml
