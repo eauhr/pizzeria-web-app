@@ -2,6 +2,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
+using Microsoft.AspNetCore.RateLimiting;
 using backend.Data;
 using backend.Dtos;
 using backend.Models;
@@ -11,127 +14,160 @@ namespace backend.Controllers;
 
 [ApiController]
 [Route("api/auth")]
+[EnableRateLimiting("auth")]
 public class AuthController : ControllerBase
 {
     private readonly PizzeriaDbContext _db;
     private readonly IJwtService _jwt;
     private readonly IEmailService _email;
     private readonly IConfiguration _config;
+    private readonly ILogger<AuthController> _logger;
 
-    public AuthController(PizzeriaDbContext db, IJwtService jwt, IEmailService email, IConfiguration config)
+    public AuthController(PizzeriaDbContext db, IJwtService jwt, IEmailService email, IConfiguration config, ILogger<AuthController> logger)
     {
-        _db = db; _jwt = jwt; _email = email; _config = config;
+        _db = db; _jwt = jwt; _email = email; _config = config; _logger = logger;
     }
 
     [HttpPost("register")]
-    public async Task<IActionResult> Register(RegisterRequest req)
+    public async Task<IActionResult> Register(RegisterRequest req, CancellationToken cancellationToken)
     {
-        if (await _db.Users.AnyAsync(u => u.Email == req.Email))
-            return BadRequest(new { message = "An account with this email already exists." });
+        var email = NormalizeEmail(req.Email);
+        if (await _db.Users.AnyAsync(u => u.Email.ToLower() == email, cancellationToken))
+            return Ok(new { message = "If the account can be registered, a verification email will be sent." });
 
         var otp = GenerateOtp();
         var user = new User
         {
             Name = req.Name,
-            Email = req.Email,
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(req.Password),
+            Email = email,
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(req.Password, workFactor: 12),
             IsEmailVerified = false,
-            OtpCode = otp,
+            OtpCode = HashOtp(otp),
             OtpExpiresAt = DateTime.UtcNow.AddMinutes(10),
         };
 
         _db.Users.Add(user);
-        await _db.SaveChangesAsync();
-        await _email.SendOtpEmailAsync(user.Email, otp);
+        await _db.SaveChangesAsync(cancellationToken);
+        await TrySendOtpEmailAsync(user.Email, otp);
 
         return Ok(new { message = "Registered. Check your email for a verification code." });
     }
 
     [HttpPost("verify-otp")]
-    public async Task<IActionResult> VerifyOtp(VerifyOtpRequest req)
+    public async Task<IActionResult> VerifyOtp(VerifyOtpRequest req, CancellationToken cancellationToken)
     {
-        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == req.Email);
-        if (user == null || user.OtpCode != req.Otp || user.OtpExpiresAt < DateTime.UtcNow)
+        var email = NormalizeEmail(req.Email);
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == email, cancellationToken);
+        if (user == null || user.OtpCode != HashOtp(req.Otp) || user.OtpExpiresAt < DateTime.UtcNow)
             return BadRequest(new { message = "Invalid or expired code." });
 
         user.IsEmailVerified = true;
         user.OtpCode = null;
         user.OtpExpiresAt = null;
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(cancellationToken);
 
         return Ok(new AuthResponse(_jwt.GenerateToken(user), ToDto(user)));
     }
 
     [HttpPost("resend-otp")]
-    public async Task<IActionResult> ResendOtp(ResendOtpRequest req)
+    public async Task<IActionResult> ResendOtp(ResendOtpRequest req, CancellationToken cancellationToken)
     {
-        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == req.Email);
-        if (user != null)
+        var email = NormalizeEmail(req.Email);
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == email, cancellationToken);
+        if (user != null && !user.IsEmailVerified && user.OtpExpiresAt <= DateTime.UtcNow.AddMinutes(9))
         {
             var otp = GenerateOtp();
-            user.OtpCode = otp;
+            user.OtpCode = HashOtp(otp);
             user.OtpExpiresAt = DateTime.UtcNow.AddMinutes(10);
-            await _db.SaveChangesAsync();
-            await _email.SendOtpEmailAsync(user.Email, otp);
+            await _db.SaveChangesAsync(cancellationToken);
+            await TrySendOtpEmailAsync(user.Email, otp);
         }
         return Ok(new { message = "If that account exists, a new code was sent." });
     }
 
     [HttpPost("login")]
-    public async Task<IActionResult> Login(LoginRequest req)
+    public async Task<IActionResult> Login(LoginRequest req, CancellationToken cancellationToken)
     {
-        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == req.Email);
+        var email = NormalizeEmail(req.Email);
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == email, cancellationToken);
         if (user == null || !BCrypt.Net.BCrypt.Verify(req.Password, user.PasswordHash))
             return Unauthorized(new { message = "Invalid email or password." });
 
         if (!user.IsEmailVerified)
-            return Unauthorized(new { message = "Please verify your email before logging in." });
+            return Unauthorized(new { message = "Invalid email or password." });
 
         return Ok(new AuthResponse(_jwt.GenerateToken(user), ToDto(user)));
     }
 
     [HttpGet("me")]
     [Authorize]
-    public async Task<IActionResult> Me()
+    public async Task<IActionResult> Me(CancellationToken cancellationToken)
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-        var user = await _db.Users.FindAsync(userId);
+        var user = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
         if (user == null) return NotFound();
         return Ok(new { user = ToDto(user) });
     }
 
     [HttpPost("forgot-password")]
-    public async Task<IActionResult> ForgotPassword(ForgotPasswordRequest req)
+    public async Task<IActionResult> ForgotPassword(ForgotPasswordRequest req, CancellationToken cancellationToken)
     {
-        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == req.Email);
+        var email = NormalizeEmail(req.Email);
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == email, cancellationToken);
         if (user != null)
         {
-            var token = Guid.NewGuid().ToString("N");
-            user.PasswordResetToken = token;
+            var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+            user.PasswordResetToken = HashResetToken(token);
             user.PasswordResetTokenExpiresAt = DateTime.UtcNow.AddMinutes(30);
-            await _db.SaveChangesAsync();
+            await _db.SaveChangesAsync(cancellationToken);
 
             var frontendUrl = _config["Frontend:BaseUrl"] ?? "http://localhost:5173";
-            await _email.SendPasswordResetEmailAsync(user.Email, $"{frontendUrl}/reset-password?token={token}");
+            try
+            {
+                await _email.SendPasswordResetEmailAsync(user.Email, $"{frontendUrl}/reset-password?token={token}", cancellationToken);
+            }
+            catch (Exception exception)
+            {
+                _logger.LogError(exception, "Password reset email delivery failed.");
+            }
         }
         return Ok(new { message = "If that account exists, a reset link was sent." });
     }
 
     [HttpPost("reset-password")]
-    public async Task<IActionResult> ResetPassword(ResetPasswordRequest req)
+    public async Task<IActionResult> ResetPassword(ResetPasswordRequest req, CancellationToken cancellationToken)
     {
-        var user = await _db.Users.FirstOrDefaultAsync(u => u.PasswordResetToken == req.Token);
+        var tokenHash = HashResetToken(req.Token);
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.PasswordResetToken == tokenHash, cancellationToken);
         if (user == null || user.PasswordResetTokenExpiresAt < DateTime.UtcNow)
             return BadRequest(new { message = "Invalid or expired reset link." });
 
-        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(req.Password);
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(req.Password, workFactor: 12);
         user.PasswordResetToken = null;
         user.PasswordResetTokenExpiresAt = null;
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(cancellationToken);
 
         return Ok(new { message = "Password updated." });
     }
 
-    private static string GenerateOtp() => Random.Shared.Next(100000, 999999).ToString();
+    private static string GenerateOtp() => RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
+    private static string NormalizeEmail(string email) => email.Trim().ToLowerInvariant();
+    private string HashOtp(string otp)
+    {
+        using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
+        return Convert.ToHexString(hmac.ComputeHash(Encoding.UTF8.GetBytes(otp)));
+    }
+    private static string HashResetToken(string token) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(token)));
+    private async Task TrySendOtpEmailAsync(string email, string otp)
+    {
+        try
+        {
+            await _email.SendOtpEmailAsync(email, otp, HttpContext.RequestAborted);
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(exception, "OTP email delivery failed.");
+        }
+    }
     private static UserDto ToDto(User u) => new(u.Id, u.Name, u.Email, u.Role, u.IsEmailVerified);
 }

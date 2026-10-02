@@ -1,4 +1,5 @@
 using System.Text;
+using System.Threading.RateLimiting;
 using backend.Data;
 using backend.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -8,7 +9,29 @@ using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var jwtKey = builder.Configuration["Jwt:Key"];
+if (string.IsNullOrWhiteSpace(jwtKey) || Encoding.UTF8.GetByteCount(jwtKey) < 32)
+    throw new InvalidOperationException("Jwt:Key must be configured with at least 32 bytes.");
+if (string.IsNullOrWhiteSpace(builder.Configuration["Jwt:Issuer"]) ||
+    string.IsNullOrWhiteSpace(builder.Configuration["Jwt:Audience"]))
+    throw new InvalidOperationException("Jwt:Issuer and Jwt:Audience must be configured.");
+
 builder.Services.AddControllers();
+builder.Services.AddProblemDetails();
+builder.Services.AddHealthChecks();
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("auth", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 20,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0,
+            AutoReplenishment = true,
+        }));
+});
 
 builder.Services.AddDbContext<PizzeriaDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -28,7 +51,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)),
+                Encoding.UTF8.GetBytes(jwtKey)),
+            ClockSkew = TimeSpan.FromMinutes(1),
         };
     });
 
@@ -37,7 +61,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("Frontend", policy =>
-        policy.WithOrigins("http://localhost:5173")
+        policy.WithOrigins("http://localhost:5173", "https://eauhr.github.io")
               .AllowAnyHeader()
               .AllowAnyMethod());
 });
@@ -73,6 +97,15 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
+app.UseExceptionHandler();
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.TryAdd("X-Content-Type-Options", "nosniff");
+    context.Response.Headers.TryAdd("X-Frame-Options", "DENY");
+    context.Response.Headers.TryAdd("Referrer-Policy", "strict-origin-when-cross-origin");
+    await next();
+});
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -81,8 +114,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors("Frontend");
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHealthChecks("/health");
 
 app.Run();
