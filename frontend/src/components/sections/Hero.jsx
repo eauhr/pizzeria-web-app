@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Image } from "@/components/ui/image";
 import { ArrowRight } from "lucide-react";
 import { motion } from "motion/react";
-import heroOven from "@/assets/images/home-pizza.png";
+import heroOven from "@/assets/images/home-pizza.webp";
 
 export default function Hero() {
   return (
@@ -71,6 +71,8 @@ export default function Hero() {
             <Image
               src={heroOven}
               alt="Wood-fired oven with fresh pizza"
+              loading="eager"
+              fetchPriority="high"
               className="w-full aspect-[4/3] object-cover rounded shadow-2xl"
               fittingType="fill"
             />

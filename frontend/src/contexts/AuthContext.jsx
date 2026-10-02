@@ -1,13 +1,46 @@
-import { createContext, useCallback, useContext, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import apiClient from "@/lib/apiClient";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
+  const [token, setToken] = useState(() => localStorage.getItem("auth_token"));
   const [loading, setLoading] = useState(true);
   const [authChecked, setAuthChecked] = useState(false);
   const [authError, setAuthError] = useState(null);
+
+  useEffect(() => {
+    if (!token || import.meta.env.VITE_DEMO_MODE === "true") return undefined;
+
+    let expiresAt;
+    try {
+      const payload = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+      expiresAt = JSON.parse(window.atob(payload)).exp * 1000;
+    } catch {
+      expiresAt = 0;
+    }
+
+    const timeout = window.setTimeout(
+      () => window.dispatchEvent(new Event("auth:unauthorized")),
+      Math.max(0, expiresAt - Date.now()),
+    );
+    return () => window.clearTimeout(timeout);
+  }, [token]);
+
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      localStorage.removeItem("auth_token");
+      setToken(null);
+      setUser(null);
+      setAuthError({ type: "unauthenticated", message: "Your session has expired. Please sign in again." });
+      setAuthChecked(true);
+      setLoading(false);
+    };
+
+    window.addEventListener("auth:unauthorized", handleUnauthorized);
+    return () => window.removeEventListener("auth:unauthorized", handleUnauthorized);
+  }, []);
 
   const checkUserAuth = useCallback(async () => {
     const token = localStorage.getItem("auth_token");
@@ -24,9 +57,15 @@ export function AuthProvider({ children }) {
       setUser(data.user ?? data);
       setAuthError(null);
     } catch (error) {
-      localStorage.removeItem("auth_token");
+      if (error.status === 401) {
+        localStorage.removeItem("auth_token");
+        setToken(null);
+      }
       setUser(null);
-      setAuthError({ type: "unauthenticated", message: error.message });
+      setAuthError({
+        type: error.status === 401 ? "unauthenticated" : "unavailable",
+        message: error.status === 401 ? error.message : "Could not verify your session. Please try again.",
+      });
     } finally {
       setLoading(false);
       setAuthChecked(true);
@@ -35,7 +74,10 @@ export function AuthProvider({ children }) {
 
   async function login(email, password) {
     const data = await apiClient.post("/auth/login", { email, password });
-    if (data.token) localStorage.setItem("auth_token", data.token);
+    if (data.token) {
+      localStorage.setItem("auth_token", data.token);
+      setToken(data.token);
+    }
     setUser(data.user ?? null);
     setAuthError(null);
     setAuthChecked(true);
@@ -48,7 +90,10 @@ export function AuthProvider({ children }) {
 
   async function verifyOtp({ email, otpCode }) {
     const data = await apiClient.post("/auth/verify-otp", { email, otp: otpCode });
-    if (data.token) localStorage.setItem("auth_token", data.token);
+    if (data.token) {
+      localStorage.setItem("auth_token", data.token);
+      setToken(data.token);
+    }
     setUser(data.user ?? null);
     setAuthError(null);
     setAuthChecked(true);
@@ -69,6 +114,7 @@ export function AuthProvider({ children }) {
 
   function logout() {
     localStorage.removeItem("auth_token");
+    setToken(null);
     setUser(null);
     setAuthError(null);
   }

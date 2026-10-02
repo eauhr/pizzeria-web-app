@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Image } from "@/components/ui/image";
 import { specialties } from "@/data/menu";
+import { formatPrice } from "@/lib/formatPrice";
 
 export default function Specialties() {
   return (
@@ -27,7 +28,7 @@ export default function Specialties() {
                   fittingType="fill"
                 />
                 <span className="absolute top-3 right-3 bg-secondary text-secondary-foreground display text-base px-3 py-1.5 rounded">
-                  €{s.price}
+                  {formatPrice(s.price)}
                 </span>
               </div>
               <h3 className="display text-2xl mt-4 text-foreground">{s.name}</h3>

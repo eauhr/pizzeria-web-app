@@ -1,15 +1,19 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MapPin, Phone, Clock, Bike, Navigation } from "lucide-react";
 
 export default function Visit() {
   const [form, setForm] = useState({ name: "", phone: "", date: "", guests: "2", note: "" });
   const [sent, setSent] = useState(false);
+  const sentTimer = useRef(null);
+
+  useEffect(() => () => window.clearTimeout(sentTimer.current), []);
 
   const submit = (e) => {
     e.preventDefault();
     setSent(true);
     setForm({ name: "", phone: "", date: "", guests: "2", note: "" });
-    setTimeout(() => setSent(false), 4000);
+    window.clearTimeout(sentTimer.current);
+    sentTimer.current = window.setTimeout(() => setSent(false), 4000);
   };
 
   return (
@@ -71,11 +75,12 @@ export default function Visit() {
           {/* reservation form */}
           <div className="bg-primary text-primary-foreground rounded p-7 md:p-9">
             <h2 className="display text-3xl text-secondary">Request a table</h2>
-            <p className="text-sm text-primary-foreground/70 mt-1 mb-6">We'll confirm by phone. For same-day, please call us directly.</p>
+            <p className="text-sm text-primary-foreground/70 mt-1 mb-6">Demo form: requests are not sent. Please call us directly to reserve a table.</p>
             <form onSubmit={submit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-widest mb-1.5">Name</label>
+                <label htmlFor="reservation-name" className="block text-xs font-semibold uppercase tracking-widest mb-1.5">Name</label>
                 <input
+                  id="reservation-name"
                   value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
                   required
                   className="w-full bg-primary-foreground/5 border border-primary-foreground/20 rounded px-4 py-3 text-sm outline-none focus:border-secondary"
@@ -83,16 +88,19 @@ export default function Visit() {
               </div>
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-widest mb-1.5">Phone</label>
+                  <label htmlFor="reservation-phone" className="block text-xs font-semibold uppercase tracking-widest mb-1.5">Phone</label>
                   <input
+                    id="reservation-phone"
+                    type="tel"
                     value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })}
                     required
                     className="w-full bg-primary-foreground/5 border border-primary-foreground/20 rounded px-4 py-3 text-sm outline-none focus:border-secondary"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-widest mb-1.5">Guests</label>
+                  <label htmlFor="reservation-guests" className="block text-xs font-semibold uppercase tracking-widest mb-1.5">Guests</label>
                   <select
+                    id="reservation-guests"
                     value={form.guests} onChange={(e) => setForm({ ...form, guests: e.target.value })}
                     className="w-full bg-primary-foreground/5 border border-primary-foreground/20 rounded px-4 py-3 text-sm outline-none focus:border-secondary"
                   >
@@ -101,8 +109,9 @@ export default function Visit() {
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-widest mb-1.5">Date & time</label>
+                <label htmlFor="reservation-date" className="block text-xs font-semibold uppercase tracking-widest mb-1.5">Date & time</label>
                 <input
+                  id="reservation-date"
                   type="datetime-local"
                   value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })}
                   required
@@ -110,15 +119,16 @@ export default function Visit() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-widest mb-1.5">Note (optional)</label>
+                <label htmlFor="reservation-note" className="block text-xs font-semibold uppercase tracking-widest mb-1.5">Note (optional)</label>
                 <textarea
+                  id="reservation-note"
                   value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })}
                   rows={2}
                   className="w-full bg-primary-foreground/5 border border-primary-foreground/20 rounded px-4 py-3 text-sm outline-none focus:border-secondary resize-none"
                 />
               </div>
               <button type="submit" className="w-full bg-secondary text-secondary-foreground display text-lg py-3.5 rounded hover:bg-[#b13a22] transition-colors">
-                {sent ? "Grazie! We'll call you." : "Send request"}
+                {sent ? "Demo preview only — not sent" : "Preview request"}
               </button>
             </form>
           </div>

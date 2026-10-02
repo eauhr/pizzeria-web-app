@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,7 +21,14 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [showOtp, setShowOtp] = useState(false);
   const [otpCode, setOtpCode] = useState("");
+  const [resendSeconds, setResendSeconds] = useState(0);
   const returnTo = safeReturnTo();
+
+  useEffect(() => {
+    if (resendSeconds === 0) return undefined;
+    const timer = window.setTimeout(() => setResendSeconds((seconds) => seconds - 1), 1000);
+    return () => window.clearTimeout(timer);
+  }, [resendSeconds]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -34,6 +41,7 @@ export default function Register() {
     try {
       await register({ name, email, password });
       setShowOtp(true);
+      setResendSeconds(60);
     } catch (err) {
       setError(err.message || "Registration failed");
     } finally {
@@ -55,9 +63,11 @@ export default function Register() {
   };
 
   const handleResend = async () => {
+    if (resendSeconds > 0) return;
     setError("");
     try {
       await resendOtp(email);
+      setResendSeconds(60);
       toast({
         title: "Code sent",
         description: "Check your email for the new code.",
@@ -75,7 +85,7 @@ export default function Register() {
         subtitle={`We sent a code to ${email}`}
       >
         {error && (
-          <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
+          <div role="alert" className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
             {error}
           </div>
         )}
@@ -113,8 +123,8 @@ export default function Register() {
         </Button>
         <p className="text-center text-sm text-muted-foreground mt-4">
           Didn't receive the code?{" "}
-          <button onClick={handleResend} className="text-primary font-medium hover:underline">
-            Resend
+          <button type="button" onClick={handleResend} disabled={resendSeconds > 0} className="text-primary font-medium hover:underline disabled:cursor-not-allowed disabled:opacity-60">
+            {resendSeconds > 0 ? `Resend in ${resendSeconds}s` : "Resend code"}
           </button>
         </p>
       </AuthLayout>
@@ -139,9 +149,12 @@ export default function Register() {
       }
     >
       {error && (
-        <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
+        <div role="alert" className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
           {error}
         </div>
+      )}
+      {import.meta.env.VITE_DEMO_MODE === "true" && (
+        <p className="mb-4 text-center text-sm" role="note">Use demo verification code 123456.</p>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">

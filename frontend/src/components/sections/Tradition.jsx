@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Image } from "@/components/ui/image";
 import { ArrowRight } from "lucide-react";
-import doughHands from "@/assets/images/dough-hands.png";
+import doughHands from "@/assets/images/dough-hands.webp";
 
 
 export default function Tradition() {

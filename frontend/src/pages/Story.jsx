@@ -1,7 +1,7 @@
 import { Image } from "@/components/ui/image";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
-import diningRoom from "@/assets/images/dining-room.png";
+import diningRoom from "@/assets/images/dining-room.webp";
 
 const values = [
   { title: "Fresco", desc: "Produce sourced daily, never frozen." },
@@ -33,7 +33,7 @@ export default function Story() {
             <div className="group rotate-[-2deg] transition-all duration-500 ease-out hover:rotate-0 hover:scale-105">
               <Image
                 src={diningRoom}
-                alt="Picanntino dining room"
+                alt="Picantino dining room"
                 className="w-full aspect-[4/3] object-cover rounded shadow-xl transition-shadow duration-500 group-hover:shadow-2xl"
                 fittingType="fill"
               />
@@ -46,7 +46,7 @@ export default function Story() {
               It started in 2005 with a single wood-fired oven and a stubborn belief that pizza should be made the Neapolitan way - by hand, with fire, and with patience. Two decades later, the oven is still the first thing lit each morning.
             </p>
             <p>
-              Over the years Picanntino grew into something bigger than a pizzeria: a full Italian kitchen turning out fresh pasta, seafood from the grill, risotto and a wine cellar that travels from Tuscany to Puglia. Two dining rooms - one casual, one a little more intimate - mean there's a corner for every occasion.
+              Over the years Picantino grew into something bigger than a pizzeria: a full Italian kitchen turning out fresh pasta, seafood from the grill, risotto and a wine cellar that travels from Tuscany to Puglia. Two dining rooms - one casual, one a little more intimate - mean there's a corner for every occasion.
             </p>
             <p>
               We're a neighbourhood place. Regulars who first came as students now bring their own kids. That's the whole point. We cook like we're cooking for people we'll see again next week - because we will.

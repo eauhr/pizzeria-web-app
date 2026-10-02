@@ -1,7 +1,7 @@
 import { Image } from "@/components/ui/image";
-import diningRoom from "@/assets/images/dining-room.png";
-import margherita from "@/assets/images/margherita.png";
-import cannelloni from "@/assets/images/cann.png";
+import diningRoom from "@/assets/images/dining-room.webp";
+import margherita from "@/assets/images/margherita.webp";
+import cannelloni from "@/assets/images/cann.webp";
 
 const shots = [
   { src: diningRoom, alt: "Dining room interior", cls: "rotate-[-2deg] col-span-2", note: "two rooms, two moods" },
