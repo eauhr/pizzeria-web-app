@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import apiClient from "@/lib/apiClient";
 
 const AuthContext = createContext(null);
@@ -9,6 +9,7 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [authChecked, setAuthChecked] = useState(false);
   const [authError, setAuthError] = useState(null);
+  const initialAuthCheckStarted = useRef(false);
 
   useEffect(() => {
     if (!token || import.meta.env.VITE_DEMO_MODE === "true") return undefined;
@@ -72,6 +73,12 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  useEffect(() => {
+    if (initialAuthCheckStarted.current) return;
+    initialAuthCheckStarted.current = true;
+    void checkUserAuth();
+  }, [checkUserAuth]);
+
   async function login(email, password) {
     const data = await apiClient.post("/auth/login", { email, password });
     if (data.token) {
@@ -85,11 +92,7 @@ export function AuthProvider({ children }) {
   }
 
   async function register({ name, email, password }) {
-    return apiClient.post("/auth/register", { name, email, password });
-  }
-
-  async function verifyOtp({ email, otpCode }) {
-    const data = await apiClient.post("/auth/verify-otp", { email, otp: otpCode });
+    const data = await apiClient.post("/auth/register", { name, email, password });
     if (data.token) {
       localStorage.setItem("auth_token", data.token);
       setToken(data.token);
@@ -98,10 +101,6 @@ export function AuthProvider({ children }) {
     setAuthError(null);
     setAuthChecked(true);
     return data;
-  }
-
-  async function resendOtp(email) {
-    return apiClient.post("/auth/resend-otp", { email });
   }
 
   async function resetPasswordRequest(email) {
@@ -128,8 +127,6 @@ export function AuthProvider({ children }) {
     checkUserAuth,
     login,
     register,
-    verifyOtp,
-    resendOtp,
     resetPasswordRequest,
     resetPassword,
     logout,

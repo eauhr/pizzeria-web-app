@@ -79,10 +79,13 @@ export default function ResetPassword() {
               placeholder="••••••••"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
+              minLength={8}
+              maxLength={72}
               className="pl-10 h-12"
               required
             />
           </div>
+          <p className="text-xs text-muted-foreground">Use at least 8 characters.</p>
         </div>
         <div className="space-y-2">
           <Label htmlFor="confirm">Confirm Password</Label>

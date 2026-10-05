@@ -33,56 +33,20 @@ public class AuthController : ControllerBase
     {
         var email = NormalizeEmail(req.Email);
         if (await _db.Users.AnyAsync(u => u.Email.ToLower() == email, cancellationToken))
-            return Ok(new { message = "If the account can be registered, a verification email will be sent." });
+            return Conflict(new { message = "An account with this email already exists. Please sign in or reset your password." });
 
-        var otp = GenerateOtp();
         var user = new User
         {
             Name = req.Name,
             Email = email,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(req.Password, workFactor: 12),
-            IsEmailVerified = false,
-            OtpCode = HashOtp(otp),
-            OtpExpiresAt = DateTime.UtcNow.AddMinutes(10),
+            IsEmailVerified = true,
         };
 
         _db.Users.Add(user);
         await _db.SaveChangesAsync(cancellationToken);
-        await TrySendOtpEmailAsync(user.Email, otp);
-
-        return Ok(new { message = "Registered. Check your email for a verification code." });
-    }
-
-    [HttpPost("verify-otp")]
-    public async Task<IActionResult> VerifyOtp(VerifyOtpRequest req, CancellationToken cancellationToken)
-    {
-        var email = NormalizeEmail(req.Email);
-        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == email, cancellationToken);
-        if (user == null || user.OtpCode != HashOtp(req.Otp) || user.OtpExpiresAt < DateTime.UtcNow)
-            return BadRequest(new { message = "Invalid or expired code." });
-
-        user.IsEmailVerified = true;
-        user.OtpCode = null;
-        user.OtpExpiresAt = null;
-        await _db.SaveChangesAsync(cancellationToken);
 
         return Ok(new AuthResponse(_jwt.GenerateToken(user), ToDto(user)));
-    }
-
-    [HttpPost("resend-otp")]
-    public async Task<IActionResult> ResendOtp(ResendOtpRequest req, CancellationToken cancellationToken)
-    {
-        var email = NormalizeEmail(req.Email);
-        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == email, cancellationToken);
-        if (user != null && !user.IsEmailVerified && user.OtpExpiresAt <= DateTime.UtcNow.AddMinutes(9))
-        {
-            var otp = GenerateOtp();
-            user.OtpCode = HashOtp(otp);
-            user.OtpExpiresAt = DateTime.UtcNow.AddMinutes(10);
-            await _db.SaveChangesAsync(cancellationToken);
-            await TrySendOtpEmailAsync(user.Email, otp);
-        }
-        return Ok(new { message = "If that account exists, a new code was sent." });
     }
 
     [HttpPost("login")]
@@ -93,8 +57,13 @@ public class AuthController : ControllerBase
         if (user == null || !BCrypt.Net.BCrypt.Verify(req.Password, user.PasswordHash))
             return Unauthorized(new { message = "Invalid email or password." });
 
-        if (!user.IsEmailVerified)
-            return Unauthorized(new { message = "Invalid email or password." });
+        if (!user.IsEmailVerified || user.OtpCode != null || user.OtpExpiresAt != null)
+        {
+            user.IsEmailVerified = true;
+            user.OtpCode = null;
+            user.OtpExpiresAt = null;
+            await _db.SaveChangesAsync(cancellationToken);
+        }
 
         return Ok(new AuthResponse(_jwt.GenerateToken(user), ToDto(user)));
     }
@@ -150,24 +119,7 @@ public class AuthController : ControllerBase
         return Ok(new { message = "Password updated." });
     }
 
-    private static string GenerateOtp() => RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
     private static string NormalizeEmail(string email) => email.Trim().ToLowerInvariant();
-    private string HashOtp(string otp)
-    {
-        using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
-        return Convert.ToHexString(hmac.ComputeHash(Encoding.UTF8.GetBytes(otp)));
-    }
     private static string HashResetToken(string token) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(token)));
-    private async Task TrySendOtpEmailAsync(string email, string otp)
-    {
-        try
-        {
-            await _email.SendOtpEmailAsync(email, otp, HttpContext.RequestAborted);
-        }
-        catch (Exception exception)
-        {
-            _logger.LogError(exception, "OTP email delivery failed.");
-        }
-    }
     private static UserDto ToDto(User u) => new(u.Id, u.Name, u.Email, u.Role, u.IsEmailVerified);
 }

@@ -31,14 +31,14 @@ function getDemoResponse(endpoint, method) {
     return { user: { id: 1, name: "Demo Guest", email: "guest@example.com", role: "Customer", isEmailVerified: true } };
   }
 
-  if (endpoint === "/auth/login" || endpoint === "/auth/verify-otp") {
+  if (endpoint === "/auth/login" || endpoint === "/auth/register") {
     return {
       token: "portfolio-demo-session",
       user: { id: 1, name: "Demo Guest", email: "guest@example.com", role: "Customer", isEmailVerified: true },
     };
   }
 
-  if (["/auth/register", "/auth/resend-otp", "/auth/forgot-password", "/auth/reset-password"].includes(endpoint)) {
+  if (["/auth/forgot-password", "/auth/reset-password"].includes(endpoint)) {
     return { message: "This portfolio demo simulates account actions; no email or account data is sent." };
   }
 
@@ -67,14 +67,20 @@ async function request(endpoint, options = {}) {
   });
 
   const contentType = response.headers.get("content-type");
-  const data = contentType?.includes("application/json")
+  const data = contentType?.includes("json")
     ? await response.json()
     : await response.text();
 
   if (!response.ok) {
+    const validationMessages = data?.errors && typeof data.errors === "object"
+      ? Object.values(data.errors).flat().filter((message) => typeof message === "string")
+      : [];
     const message =
       data?.message ||
       data?.error ||
+      validationMessages.join(" ") ||
+      data?.detail ||
+      data?.title ||
       `Request failed with status ${response.status}`;
 
     const error = new Error(message);

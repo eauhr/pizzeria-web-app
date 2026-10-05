@@ -1,27 +1,30 @@
-import { defineConfig } from "vite";
+import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
-import path from "path";
+import { fileURLToPath } from "node:url";
 
-export default defineConfig({
+const sourceDirectory = fileURLToPath(new URL("./src", import.meta.url));
+
+export default defineConfig(({ command }) => ({
   plugins: [react()],
-
-  base: "/pizzeria-web-app/",
+  base: command === "build" ? "/pizzeria-web-app/" : "/",
+  test: {
+    environment: "jsdom",
+    setupFiles: "./src/test/setup.js",
+  },
 
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      "@": sourceDirectory,
     },
   },
 
   server: {
-    port: 5173,
-
     proxy: {
-      "/api": {
-        target: process.env.VITE_BACKEND_URL || "http://localhost:5000",
+      '/api': {
+        target: 'http://localhost:5127',
         changeOrigin: true,
         secure: false,
-      },
+      }
     },
   },
-});
+}));

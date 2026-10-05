@@ -37,6 +37,23 @@ namespace backend.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Categories");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Pizza"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Pasta"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Wine"
+                        });
                 });
 
             modelBuilder.Entity("backend.Models.Order", b =>
@@ -136,6 +153,96 @@ namespace backend.Migrations
                     b.HasIndex("CategoryId");
 
                     b.ToTable("Products");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CategoryId = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "Tomato sauce, mozzarella",
+                            ImageUrl = "",
+                            IsAvailable = true,
+                            Name = "Margherita",
+                            Price = 7.11m
+                        },
+                        new
+                        {
+                            Id = 2,
+                            CategoryId = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "Tomato sauce, four cheeses",
+                            ImageUrl = "",
+                            IsAvailable = true,
+                            Name = "Quattro Formaggi",
+                            Price = 9.05m
+                        },
+                        new
+                        {
+                            Id = 3,
+                            CategoryId = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "Tomato, mozzarella, spicy salami, chili, garlic",
+                            ImageUrl = "",
+                            IsAvailable = true,
+                            Name = "Diavolo",
+                            Price = 8.79m
+                        },
+                        new
+                        {
+                            Id = 4,
+                            CategoryId = 2,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "Cream, ham, egg, parmesan",
+                            ImageUrl = "",
+                            IsAvailable = true,
+                            Name = "Spaghetti alla Carbonara",
+                            Price = 8.44m
+                        },
+                        new
+                        {
+                            Id = 5,
+                            CategoryId = 2,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "Salmon, mushroom, garlic, cream, tomato",
+                            ImageUrl = "",
+                            IsAvailable = true,
+                            Name = "Tagliatelle al Salmone",
+                            Price = 10.79m
+                        },
+                        new
+                        {
+                            Id = 6,
+                            CategoryId = 2,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "Beef ragù, béchamel, gouda",
+                            ImageUrl = "",
+                            IsAvailable = true,
+                            Name = "Lasagne al Forno",
+                            Price = 9.31m
+                        },
+                        new
+                        {
+                            Id = 7,
+                            CategoryId = 3,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "750ml · 8.7% vol",
+                            ImageUrl = "",
+                            IsAvailable = true,
+                            Name = "Castra Rubra Rosé",
+                            Price = 19.94m
+                        },
+                        new
+                        {
+                            Id = 8,
+                            CategoryId = 3,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "750ml · 8.7% vol",
+                            ImageUrl = "",
+                            IsAvailable = true,
+                            Name = "Santa Cristina Rosato",
+                            Price = 34.26m
+                        });
                 });
 
             modelBuilder.Entity("backend.Models.User", b =>

@@ -1,12 +1,11 @@
-import margherita from "@/assets/images/margherita.png";
-import pasta from "@/assets/images/pasta.png";  
-import cannelloni from "@/assets/images/cann.png"; 
+import margherita from "@/assets/images/margherita.webp";
+import pasta from "@/assets/images/pasta.webp";
+import cannelloni from "@/assets/images/cann.webp";
 
 export const menuCategories = [
   {
     id: "pizza",
     name: "Pizza",
-    tagline: "from the wood-fired oven",
     items: [
       { name: "Margherita", desc: "San Marzano tomato, fior di latte, fresh basil, EVOO", price: "7.11" },
       { name: "Diavola", desc: "tomato, mozzarella, spicy salami, chilli", price: "8.79" },
@@ -19,7 +18,6 @@ export const menuCategories = [
   {
     id: "pasta",
     name: "Pasta & Risotto",
-    tagline: "made fresh, cooked to order",
     items: [
       { name: "Spaghetti Vongole", desc: "clams, white wine, garlic, parsley, chilli", price: "8.69" },
       { name: "Tagliatelle al Ragù", desc: "slow-cooked beef ragù, parmigiano", price: "9.50" },
@@ -31,7 +29,6 @@ export const menuCategories = [
   {
     id: "antipasti",
     name: "Antipasti",
-    tagline: "to share, to start",
     items: [
       { name: "Tagliere Misto", desc: "cured meats, cheeses, olives, grissini", price: "6.11" },
       { name: "Bruschetta Classica", desc: "grilled bread, tomato, basil, garlic", price: "4.59" },
@@ -40,20 +37,8 @@ export const menuCategories = [
     ],
   },
   {
-    id: "mains",
-    name: "From the Kitchen",
-    tagline: "seafood & meat specialties",
-    items: [
-      { name: "Gamberoni alla Griglia", desc: "grilled king prawns, garlic, lemon, herbs", price: "11.50" },
-      { name: "Pollo al Marsala", desc: "chicken, Marsala wine, mushrooms", price: "8.79" },
-      { name: "Branzino al Forno", desc: "baked sea bass, rosemary, potatoes", price: "9.69" },
-      { name: "Saltimbocca alla Romana", desc: "veal, prosciutto, sage, white wine", price: "10.99" },
-    ],
-  },
-  {
     id: "wine",
-    name: "Wine & Dolci",
-    tagline: "to finish well",
+    name: "Wine",
     items: [
       { name: "Chianti DOCG", desc: "Tuscany, 0.75l - bottle", price: "32.00" },
       { name: "Primitivo di Puglia", desc: "Puglia, 0.75l - bottle", price: "28.00" },
@@ -68,3 +53,20 @@ export const specialties = [
   { name: "Linguine ai Frutti di Mare", desc: "Prawns, calamari, mussels, tomato.", price: "9.51", img: pasta },
   { name: "Cannelloni al Forno", desc: "Baked, ricotta, spinach, béchamel.", price: "8.50", img: cannelloni }, 
 ];
+
+export const featuredMenu = {
+  pizza: [
+    { name: "Margherita", desc: "San Marzano tomato, mozzarella", price: "7.11" },
+    { name: "Quattro Formaggi", desc: "Tomato sauce, four cheeses", price: "9.05" },
+    { name: "Diavolo", desc: "Tomato, mozzarella, spicy salami, chili, garlic", price: "8.79" },
+  ],
+  pasta: [
+    { name: "Spaghetti alla Carbonara", desc: "Cream, ham, egg, parmesan", price: "8.44" },
+    { name: "Tagliatelle al Salmone", desc: "Salmon, mushroom, garlic, cream, tomato", price: "10.79" },
+    { name: "Lasagne al Forno", desc: "Beef ragù, béchamel, gouda", price: "9.31" },
+  ],
+  wine: [
+    { name: "Castra Rubra Rosé", desc: "750ml · 8.7% vol", price: "19.94" },
+    { name: "Santa Cristina Rosato", desc: "750ml · 8.7% vol", price: "34.26" },
+  ],
+};

@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu as MenuIcon, X, Phone } from "lucide-react";
+import { ShoppingBag } from "lucide-react";
+import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 const navLinks = [
   { label: "Home", to: "/" },
@@ -12,6 +15,11 @@ const navLinks = [
 export default function SiteHeader() {
   const [open, setOpen] = useState(false);
   const { pathname } = useLocation();
+  const { count } = useCart();
+  const { user } = useAuth();
+  const visibleNavLinks = user?.role === "Admin"
+    ? [...navLinks, { label: "Admin", to: "/admin" }]
+    : navLinks;
 
   useEffect(() => { setOpen(false); }, [pathname]);
 
@@ -32,12 +40,20 @@ export default function SiteHeader() {
 
           {/* center: logo */}
           <Link to="/" className="absolute left-1/2 -translate-x-1/2">
-            <span className="display text-2xl md:text-3xl tracking-wide">PICANNTINO</span>
+            <span className="display text-2xl md:text-3xl tracking-wide">PICANTINO</span>
           </Link>
 
           {/* right: nav / hamburger */}
           <nav className="hidden md:flex items-center gap-7">
-            {navLinks.map((l) => (
+            <Link to="/cart" aria-label={count ? `Shopping cart, ${count} items` : "Shopping cart"} className="relative flex items-center">
+                <ShoppingBag className="w-5 h-5" />
+                  {count > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-secondary text-secondary-foreground text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+              {count}
+            </span>
+               )}
+                 </Link>
+            {visibleNavLinks.map((l) => (
               <Link
                 key={l.to}
                 to={l.to}
@@ -51,6 +67,8 @@ export default function SiteHeader() {
             onClick={() => setOpen((v) => !v)}
             className="md:hidden p-1"
             aria-label="Toggle menu"
+            aria-expanded={open}
+            aria-controls="mobile-navigation"
           >
             {open ? <X className="w-6 h-6" /> : <MenuIcon className="w-6 h-6" />}
           </button>
@@ -59,9 +77,9 @@ export default function SiteHeader() {
 
       {/* mobile panel */}
       {open && (
-        <div className="md:hidden bg-primary border-t border-primary-foreground/10">
+        <div id="mobile-navigation" className="md:hidden bg-primary border-t border-primary-foreground/10">
           <nav className="px-6 py-4 flex flex-col">
-            {navLinks.map((l) => (
+            {visibleNavLinks.map((l) => (
               <Link
                 key={l.to}
                 to={l.to}
@@ -70,6 +88,9 @@ export default function SiteHeader() {
                 {l.label}
               </Link>
             ))}
+            <Link to="/cart" aria-label={count ? `Shopping cart, ${count} items` : "Shopping cart"} className="display text-2xl py-3 border-b border-primary-foreground/10">
+              Cart {count > 0 && `(${count})`}
+            </Link>
             <Link to="/visit" className="mt-4 inline-flex items-center justify-center gap-2 bg-secondary text-secondary-foreground display text-lg py-3 rounded">
               <Phone className="w-4 h-4" /> Order / Reserve
             </Link>
