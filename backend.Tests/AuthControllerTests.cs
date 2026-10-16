@@ -15,21 +15,42 @@ namespace backend.Tests;
 public sealed class AuthControllerTests
 {
     [Fact]
-    public async Task RegisterNormalizesEmailAndVerifyOtpConsumesHashedCode()
+    public async Task RegisterNormalizesEmailAndReturnsSignedInVerifiedAccountWithoutOtp()
     {
         var (controller, db, mail) = CreateController();
-        await controller.Register(new RegisterRequest("Test Guest", " Guest@Example.com ", "SecurePass1!"), CancellationToken.None);
+        var result = await controller.Register(new RegisterRequest("Test Guest", " Guest@Example.com ", "SecurePass1!"), CancellationToken.None);
 
         var user = await db.Users.SingleAsync();
         Assert.Equal("guest@example.com", user.Email);
-        Assert.NotNull(mail.OtpCode);
-        Assert.NotEqual(mail.OtpCode, user.OtpCode);
+        Assert.IsType<OkObjectResult>(result);
+        Assert.True(user.IsEmailVerified);
+        Assert.Null(user.OtpCode);
+        Assert.Null(user.OtpExpiresAt);
+        Assert.Null(mail.ResetLink);
+    }
 
-        var result = await controller.VerifyOtp(new VerifyOtpRequest("GUEST@example.com", mail.OtpCode!), CancellationToken.None);
+    [Fact]
+    public async Task LoginAllowsLegacyUnverifiedAccountAndClearsOtpState()
+    {
+        var (controller, db, _) = CreateController();
+        var user = new User
+        {
+            Name = "Test Guest",
+            Email = "guest@example.com",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("SecurePass1!"),
+            IsEmailVerified = false,
+            OtpCode = "legacy-hash",
+            OtpExpiresAt = DateTime.UtcNow.AddMinutes(5),
+        };
+        db.Users.Add(user);
+        await db.SaveChangesAsync();
+
+        var result = await controller.Login(new LoginRequest("guest@example.com", "SecurePass1!"), CancellationToken.None);
 
         Assert.IsType<OkObjectResult>(result);
         Assert.True(user.IsEmailVerified);
         Assert.Null(user.OtpCode);
+        Assert.Null(user.OtpExpiresAt);
     }
 
     [Fact]
@@ -99,14 +120,7 @@ public sealed class AuthControllerTests
 
     private sealed class FakeEmailService : IEmailService
     {
-        public string? OtpCode { get; private set; }
         public string? ResetLink { get; private set; }
-
-        public Task SendOtpEmailAsync(string toEmail, string otpCode, CancellationToken cancellationToken = default)
-        {
-            OtpCode = otpCode;
-            return Task.CompletedTask;
-        }
 
         public Task SendPasswordResetEmailAsync(string toEmail, string resetLink, CancellationToken cancellationToken = default)
         {
